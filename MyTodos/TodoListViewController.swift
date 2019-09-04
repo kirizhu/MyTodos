@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-    let itemArray = ["Study Swift", "Go shopping", "Workout"]
+    var itemArray = ["Study Swift", "Go shopping", "Workout"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,8 +38,6 @@ class TodoListViewController: UITableViewController {
     //MARK - Tableview delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let selectedTodo = itemArray[indexPath.row]
-        
         //Checks to see if there is a checkmark for a selected row
         if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
             //Removes checkmark for selected row
@@ -52,8 +50,32 @@ class TodoListViewController: UITableViewController {
         //Animates the color of the selected row
         tableView.deselectRow(at: indexPath, animated: true)
         
-        print(selectedTodo)
-        
     }
+    //MARK - Add new items button
+
+    @IBAction func AddButtonPressed(_ sender: UIBarButtonItem) {
+        //local variable used
+        var textField = UITextField()
+        //create an alert
+        let alert = UIAlertController(title: "Add a new ToDo", message: "", preferredStyle: .alert)
+        //create the action
+        let action = UIAlertAction(title: "Add ToDo", style: .default) { (action) in
+            //What will happen once the user clicks the Add ToDo
+            //append the alert textfield text stored in the local variable
+            self.itemArray.append(textField.text!)
+            //Reload the data so that the tableview displays the added text from the alert textfield
+            self.tableView.reloadData()
+        }
+        //add textfield to alert with placeholder, and passing the value to our local variable so that it is accesible outside the closure
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            textField = alertTextField
+        }
+        //add the action to our alert
+        alert.addAction(action)
+        //present our alert
+        present(alert, animated: true, completion: nil)
+    }
+    
 }
 
