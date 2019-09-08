@@ -11,10 +11,18 @@ import UIKit
 class TodoListViewController: UITableViewController {
 
     var itemArray = ["Study Swift", "Go shopping", "Workout"]
+    //create a User defaults object, User defaults is an interface to the user deafaults database where you store key vaue pairs persistently
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        // Optional binding, setting itemsArray to dafaults todolistarray, casting Any? as string array
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+           itemArray = items
+        }
+        
     }
     //MARK - Tableview Datasource Methods
     
@@ -63,6 +71,8 @@ class TodoListViewController: UITableViewController {
             //What will happen once the user clicks the Add ToDo
             //append the alert textfield text stored in the local variable
             self.itemArray.append(textField.text!)
+            //Save that updated item array
+            self.defaults.set(self.itemArray, forKey: "TodoListArray")
             //Reload the data so that the tableview displays the added text from the alert textfield
             self.tableView.reloadData()
         }
