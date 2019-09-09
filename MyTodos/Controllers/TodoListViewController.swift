@@ -7,21 +7,21 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     //array of items from the data model
     var itemArray = [Item]()
-    
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    //path to were the data is being stored for our current app
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+    //We need to create the context but In order to access the persistent container view context from the Appdelegate object but since AppDelegate is a class we first need to tap into UIApplication.shared which is a singleton app instance which corresponds to our live application object were we can access the UIApplication delegate and then we downcast it as our class Appdelegate
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        
         print(dataFilePath)
-        
         loadItems()
-        
     }
     //MARK - Tableview Datasource Methods
     
@@ -66,8 +66,10 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add ToDo", style: .default) { (action) in
             //What will happen once the user clicks the Add ToDo
             //append the alert textfield text stored in the local variable
-            let newItem = Item()
+        
+            let newItem = Item(context: self.context)
             newItem.title = textField.text!
+            newItem.done = false
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -86,14 +88,10 @@ class TodoListViewController: UITableViewController {
     //MARK - Model manipulation methods
     
     func saveItems() {
-        //Save that updated item array
-        let encoder = PropertyListEncoder()
-        
         do{
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array, \(error)")
+            print("Error saving context \(error)")
         }
         
         //Reload the data so that the tableview displays the added text from the alert textfield
@@ -101,16 +99,14 @@ class TodoListViewController: UITableViewController {
     }
     
     func loadItems(){
-        if let data = try? Data(contentsOf: dataFilePath!){
-           let decoder = PropertyListDecoder()
-            
-            do{
-                itemArray = try decoder.decode([Item].self, from: data)
-            }catch{
-                print("Error decoding item array, \(error)")
-            }
-            
+        //create a request of datatype nsFetchRequest that is gonna get a bunch of items  and then tap into our item entity and we make a new fetchrequest
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+          itemArray = try context.fetch(request)
+        }catch{
+            print("Error fetching context \(error)")
         }
+        
     }
 }
 
