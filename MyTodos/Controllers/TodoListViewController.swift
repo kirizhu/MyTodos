@@ -13,6 +13,11 @@ class TodoListViewController: UITableViewController {
     
     //array of items from the data model
     var itemArray = [Item]()
+    var selectedCategory : Category? {
+        didSet{
+            loadItems()
+        }
+    }
     //path to were the data is being stored for our current app
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     //We need to create the context but In order to access the persistent container view context from the Appdelegate object but since AppDelegate is a class we first need to tap into UIApplication.shared which is a singleton app instance which corresponds to our live application object were we can access the UIApplication delegate and then we downcast it as our class Appdelegate
@@ -24,7 +29,6 @@ class TodoListViewController: UITableViewController {
         // Do any additional setup after loading the view.
         print(dataFilePath)
 
-        loadItems()
     }
     //MARK: - Tableview Datasource Methods
     
@@ -78,6 +82,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             
             self.saveItems()
@@ -106,8 +111,16 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate : NSPredicate? =  nil){
         //create a request of datatype nsFetchRequest that is gonna get a bunch of items  and then tap into our item entity and we make a new fetchrequest
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+       
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,additionalPredicate])
+        }else{
+            request.predicate = categoryPredicate
+        }
+        
         do {
           itemArray = try context.fetch(request)
         }catch{
@@ -126,10 +139,10 @@ extension TodoListViewController : UISearchBarDelegate {
        
         let request : NSFetchRequest<Item> = Item.fetchRequest()
         
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
