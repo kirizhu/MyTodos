@@ -10,6 +10,7 @@ import UIKit
 import CoreData
 
 class TodoListViewController: UITableViewController {
+    
     //array of items from the data model
     var itemArray = [Item]()
     //path to were the data is being stored for our current app
@@ -17,13 +18,15 @@ class TodoListViewController: UITableViewController {
     //We need to create the context but In order to access the persistent container view context from the Appdelegate object but since AppDelegate is a class we first need to tap into UIApplication.shared which is a singleton app instance which corresponds to our live application object were we can access the UIApplication delegate and then we downcast it as our class Appdelegate
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         print(dataFilePath)
+
         loadItems()
     }
-    //MARK - Tableview Datasource Methods
+    //MARK: - Tableview Datasource Methods
     
     //Number of rows in section
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -45,9 +48,13 @@ class TodoListViewController: UITableViewController {
         return cell
     }
 
-    //MARK - Tableview delegate Methods
+    //MARK: - Tableview delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //set it to the opposite of what it is now everytime we select something
+        //        itemArray[indexPath.row].setValue("Completed", forKey: "title")
+        //the order of the following lines of code are very important
+        //        context.delete(itemArray[indexPath.row])
+        //        itemArray.remove(at: indexPath.row)
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
 
         saveItems()
@@ -55,7 +62,8 @@ class TodoListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
         
     }
-    //MARK - Add new items button
+    
+    //MARK: - Add new items button
 
     @IBAction func AddButtonPressed(_ sender: UIBarButtonItem) {
         //local variable used
@@ -85,7 +93,7 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    //MARK - Model manipulation methods
+    //MARK: - Model manipulation methods
     
     func saveItems() {
         do{
@@ -98,15 +106,41 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    func loadItems(){
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
         //create a request of datatype nsFetchRequest that is gonna get a bunch of items  and then tap into our item entity and we make a new fetchrequest
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
         do {
           itemArray = try context.fetch(request)
         }catch{
-            print("Error fetching context \(error)")
+            print("Error fetching data from context \(error)")
         }
+        self.tableView.reloadData()
+    }
+
+}
+
+//MARK: - Search bar methods
+
+extension TodoListViewController : UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+       
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
         
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+       
     }
 }
 
