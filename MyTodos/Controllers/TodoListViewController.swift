@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     //array of items from the data model
     var todoItems : Results<Item>?
@@ -20,15 +20,11 @@ class TodoListViewController: UITableViewController {
             loadItems()
         }
     }
-    //path to were the data is being stored for our current app
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-    //We need to create the context but In order to access the persistent container view context from the Appdelegate object but since AppDelegate is a class we first need to tap into UIApplication.shared which is a singleton app instance which corresponds to our live application object were we can access the UIApplication delegate and then we downcast it as our class Appdelegate
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        print(dataFilePath)
+        //print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        tableView.rowHeight = 80.0
 
     }
     //MARK: - Tableview Datasource Methods
@@ -42,18 +38,16 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         //Create the tableView Reusable Cell with our set identifier
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row]{
             //TableView cells have a textLabel by dafault, populate it
             cell.textLabel?.text = item.title
-            //ternary operator
             // Value = condition ? valueIftrue : valueIfFalse
             cell.accessoryType = item.done ? .checkmark : .none
         }else{
             cell.textLabel?.text = "No items added"
         }
 
-        
         return cell
     }
 
@@ -130,8 +124,21 @@ class TodoListViewController: UITableViewController {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         self.tableView.reloadData()
     }
+    
+    //MARK: - Delete Data Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let itemForDeletion = self.todoItems?[indexPath.row]{
+            do{
+                try self.realm.write {
+                    self.realm.delete(itemForDeletion)
+                }
+            } catch {
+                print("Error saving context \(error)")
+            }
+        }
+    }
+ }
 
-}
 
 //MARK: - Search bar methods
 

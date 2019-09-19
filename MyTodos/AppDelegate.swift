@@ -16,7 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("didFinishLaunchingWithOptions")
-        // prints filepath to real database
+        // prints filepath to realm database
         //print(Realm.Configuration.defaultConfiguration.fileURL)
         
         do{//initialising a new Real which throws
