@@ -23,7 +23,6 @@ class TodoListViewController: UITableViewController {
     //path to were the data is being stored for our current app
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     //We need to create the context but In order to access the persistent container view context from the Appdelegate object but since AppDelegate is a class we first need to tap into UIApplication.shared which is a singleton app instance which corresponds to our live application object were we can access the UIApplication delegate and then we downcast it as our class Appdelegate
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     
     override func viewDidLoad() {
@@ -60,8 +59,7 @@ class TodoListViewController: UITableViewController {
 
     //MARK: - Tableview delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-
-        if let item = todoItems?[indexPath.row]{
+        if let item = todoItems?[indexPath.row] {
             do{
                 try realm.write {
                     item.done = !item.done
@@ -86,12 +84,13 @@ class TodoListViewController: UITableViewController {
         //create the action
         let action = UIAlertAction(title: "Add ToDo", style: .default) { (action) in
             //What will happen once the user clicks the Add ToDo
-            //append the alert textfield text stored in the local variable
             if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
                         let newItem = Item()
                         newItem.title = textField.text!
+                        let date = Date()
+                        newItem.dateCreated = date
                         currentCategory.items.append(newItem)
                     }
                 }catch{
@@ -128,7 +127,6 @@ class TodoListViewController: UITableViewController {
     }
     
     func loadItems(){
-        //create a request of datatype nsFetchRequest that is gonna get a bunch of items  and then tap into our item entity and we make a new fetchrequest
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         self.tableView.reloadData()
     }
@@ -137,27 +135,23 @@ class TodoListViewController: UITableViewController {
 
 //MARK: - Search bar methods
 
-//extension TodoListViewController : UISearchBarDelegate {
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        loadItems(with: request, predicate: predicate)
-//    }
-//
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0 {
-//            loadItems()
-//
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//        }
-//
-//    }
-//}
-//
+extension TodoListViewController : UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+        tableView.reloadData()
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+
+    }
+}
+

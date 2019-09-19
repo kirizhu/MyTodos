@@ -12,6 +12,7 @@ import RealmSwift
 class CategoryViewController: UITableViewController {
     
     let realm = try! Realm()
+    //collection of results that are category objects
     var categories : Results<Category>?
     
     
