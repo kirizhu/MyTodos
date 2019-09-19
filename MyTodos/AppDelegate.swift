@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,6 +17,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         print("didFinishLaunchingWithOptions")
+        // prints filepath to real database
+        print(Realm.Configuration.defaultConfiguration.fileURL)
+        
+        do{//initialising a new Real which throws
+            let realm = try Realm()
+
+        }catch{
+            print("Error initialisin new realm \(error)")
+        }
         
         return true
     }
