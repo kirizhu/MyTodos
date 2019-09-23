@@ -8,9 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
-    
     //array of items from the data model
     var todoItems : Results<Item>?
     let realm = try! Realm()
@@ -25,11 +25,10 @@ class TodoListViewController: SwipeTableViewController {
         super.viewDidLoad()
         //print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         tableView.rowHeight = 80.0
+        tableView.separatorStyle = .none
 
     }
     //MARK: - Tableview Datasource Methods
-    
-    //Number of rows in section
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
         return todoItems?.count ?? 1
@@ -39,15 +38,21 @@ class TodoListViewController: SwipeTableViewController {
 
         //Create the tableView Reusable Cell with our set identifier
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
         if let item = todoItems?[indexPath.row]{
             //TableView cells have a textLabel by dafault, populate it
             cell.textLabel?.text = item.title
+            
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)){
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+                
+            }
             // Value = condition ? valueIftrue : valueIfFalse
             cell.accessoryType = item.done ? .checkmark : .none
         }else{
             cell.textLabel?.text = "No items added"
         }
-
         return cell
     }
 
@@ -65,7 +70,6 @@ class TodoListViewController: SwipeTableViewController {
         tableView.reloadData()
         //Animates the color of the selected row
         tableView.deselectRow(at: indexPath, animated: true)
-        
     }
     
     //MARK: - Add new items button
@@ -90,7 +94,6 @@ class TodoListViewController: SwipeTableViewController {
                 }catch{
                     print("Error saving new items, \(error)")
                 }
-
             }
             self.tableView.reloadData()
         }
@@ -106,7 +109,6 @@ class TodoListViewController: SwipeTableViewController {
     }
     
     //MARK: - Model manipulation methods
-    
     func save(item : Item) {
         do{
             try realm.write {
@@ -115,7 +117,6 @@ class TodoListViewController: SwipeTableViewController {
         } catch {
             print("Error saving context \(error)")
         }
-        
         //Reload the data so that the tableview displays the added text from the alert textfield
         self.tableView.reloadData()
     }
@@ -139,13 +140,11 @@ class TodoListViewController: SwipeTableViewController {
     }
  }
 
-
 //MARK: - Search bar methods
 
 extension TodoListViewController : UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         tableView.reloadData()
     }
@@ -153,7 +152,6 @@ extension TodoListViewController : UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0 {
             loadItems()
-
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
             }
